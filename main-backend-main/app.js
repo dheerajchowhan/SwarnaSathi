@@ -14,6 +14,12 @@ const securityRoutes = require('./routes/security.routes.js')
 const offersRoutes = require('./routes/offers.routes.js')
 const mediaRoutes = require('./routes/media.routes.js')
 const apiSettingsRoutes = require('./routes/apiSettings.routes.js')
+const partnerRoutes = require('./routes/partner.routes.js')
+const hiwRoutes = require('./routes/HIW.routes.js');
+const faqRoutes = require('./routes/faq.routes.js');
+const teamMemberRoutes = require('./routes/teamMember.routes.js')
+const beOurPartnerRoutes = require('./routes/beOurPartner.routes.js')
+const jobOpeningRoutes = require('./routes/jobOpenings.routes.js')
 const path = require('path')
 dotenv.config();
 
@@ -36,6 +42,12 @@ app.use('/api/security', securityRoutes);
 app.use('/api/offers', offersRoutes);
 app.use('/api/media', mediaRoutes );
 app.use('/api/api-settings', apiSettingsRoutes );
+app.use('/api/partners', partnerRoutes);
+app.use('/api/hiws', hiwRoutes);
+app.use('/api/faqs', faqRoutes);
+app.use('/api/team-members', teamMemberRoutes);
+app.use('/api/be-our-partner', beOurPartnerRoutes);
+app.use('/api/job-openings', jobOpeningRoutes);
 app.use((err, req, res, next) => {
     console.error(err.stack);
     res.status(500).json({

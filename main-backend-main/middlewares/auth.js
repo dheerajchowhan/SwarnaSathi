@@ -1,50 +1,43 @@
-const jwt = require("jsonwebtoken");
-const User = require("../models/UserSchema.js");
-const BlacklistedToken = require("../models/BlacklistedToken.js");
+const jwt = require('jsonwebtoken');
+const User = require('../models/UserSchema');
+const FormSubmission = require('../models/BeOurPartner');
+const BlacklistedToken = require('../models/BlacklistedToken');
 
 const protect = async (req, res, next) => {
+  let token;
+
+  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+    token = req.headers.authorization.split(' ')[1];
+  }
+
+  if (!token) {
+    return res.status(401).json({ success: false, message: 'Not authorized, no token' });
+  }
+
   try {
-    let token;
-
-    if (
-      req.headers.authorization &&
-      req.headers.authorization.startsWith("Bearer")
-    ) {
-      token = req.headers.authorization.split(" ")[1];
-
-      req.token
+    const blacklisted = await BlacklistedToken.findOne({ token });
+    if (blacklisted) {
+      return res.status(401).json({ success: false, message: 'Token is blacklisted' });
     }
 
-    if (!token) {
-      return res.status(401).json({
-        success: false,
-        message: "Not authorized to access this route",
-      });
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    // Check if token belongs to User or FormSubmission
+    let user = await User.findById(decoded.id);
+    if (user) {
+      req.user = user;
+    } else {
+      user = await FormSubmission.findById(decoded.id);
+      if (!user) {
+        return res.status(401).json({ success: false, message: 'Not authorized, user not found' });
+      }
+      req.user = user;
     }
 
-    const isBlacklisted = await BlacklistedToken.findOne({ token });
-    if (isBlacklisted) {
-      return res.status(401).json({
-        success: false,
-        message: 'Token is no longer valid'
-      });
-    }
-
-    try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      req.user = await User.findById(decoded.id);
-      next();
-    } catch (err) {
-      return res.status(401).json({
-        success: false,
-        message: "Not authorized to access this route",
-      });
-    }
+    req.role = decoded.role;
+    next();
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Server Error",
-    });
+    res.status(401).json({ success: false, message: 'Not authorized, token failed' });
   }
 };
 

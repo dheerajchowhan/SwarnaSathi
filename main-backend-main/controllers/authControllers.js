@@ -1,20 +1,21 @@
 const User = require('../models/UserSchema.js');
+const FormSubmission = require('../models/BeOurPartner.js');
 const BlacklistedToken = require('../models/BlacklistedToken');
 const jwt = require('jsonwebtoken');
+const { sendPhoneOTP, verifyPhoneOTP } = require('../helpers/otpHelper');
 
 // Generate JWT Token
-const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRE
+const generateToken = (id, role) => {
+  return jwt.sign({ id, role }, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRE || '1h'
   });
 };
 
-// Register user
-exports.register = async (req, res) => {
+// Register Admin/User (Email/Password)
+exports.registerAdmin = async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
 
-    // Check if user exists
     const userExists = await User.findOne({ email });
     if (userExists) {
       return res.status(400).json({
@@ -27,10 +28,11 @@ exports.register = async (req, res) => {
       name,
       email,
       password,
-      role
+      role: role || 'user' // Default to 'user' unless specified
     });
 
-    const token = generateToken(user._id);
+    const token = generateToken(user._id, user.role);
+    await user.addToken(token);
 
     res.status(201).json({
       success: true,
@@ -50,79 +52,160 @@ exports.register = async (req, res) => {
   }
 };
 
-// Login user
-exports.login = async (req, res) => {
-    try {
-      const { email, password } = req.body;
-      // Validate email and password input
-      if (!email || !password) {
-        return res.status(400).json({
-          success: false,
-          message: 'Please provide email and password'
-        });
-      }
-  
-      try {
-        // Find user by email with password
-        const user = await User.findOne({ email }).select('+password');
-        
-        if (!user) {
-          return res.status(401).json({
-            success: false,
-            message: 'Invalid email or password'
-          });
-        }
-  
-        // Check password match
-        const isMatch = await user.matchPasswords(password);
-  
-        if (!isMatch) {
-          return res.status(401).json({
-            success: false,
-            message: 'Invalid email or password'
-          });
-        }
-  
-        // Generate token
-        const token = generateToken(user._id);
+// Register Form-Based User (Swarna Sathi, etc.)
+exports.registerForm = async (req, res) => {
+  try {
+    const { type, name, phone, pincode, email } = req.body;
 
-        await user.addToken(token);
-        // Send response
-        res.status(200).json({
-          success: true,
-          token,
-          user: {
-            id: user._id,
-            name: user.name,
-            email: user.email,
-            role: user.role
-          }
-        });
-      } catch (error) {
-        console.error('Login error:', error); // Add this for debugging
-        res.status(500).json({
-          success: false,
-          message: 'Error finding user',
-          error: error.message
-        });
-      }
-    } catch (error) {
-      console.error('Server error:', error); // Add this for debugging
-      res.status(500).json({
+    if (!type || !name || !phone) {
+      return res.status(400).json({ message: 'Type, name, and phone are required' });
+    }
+    if (type === 'lending-partner' && !email) {
+      return res.status(400).json({ message: 'Email is required for lending partner' });
+    }
+    if (type !== 'lending-partner' && !pincode) {
+      return res.status(400).json({ message: 'Pincode is required for this type' });
+    }
+
+    const existingUser = await FormSubmission.findOne({ phone });
+    if (existingUser) {
+      return res.status(400).json({ message: 'Phone number already registered' });
+    }
+
+    const formSubmission = new FormSubmission({
+      type,
+      name,
+      phone,
+      pincode: type !== 'lending-partner' ? pincode : undefined,
+      email: type === 'lending-partner' ? email : undefined
+    });
+
+    await formSubmission.save();
+    await sendPhoneOTP(phone);
+
+    res.status(201).json({ message: 'Registration successful, please verify phone with OTP' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Verify OTP for Form Registration
+exports.verifyFormRegistrationOTP = async (req, res) => {
+  try {
+    const { phone, otp } = req.body;
+    if (!phone || !otp) {
+      return res.status(400).json({ message: 'Phone and OTP are required' });
+    }
+
+    const result = await verifyPhoneOTP(phone, otp);
+    if (!result.success) {
+      return res.status(400).json({ message: result.message });
+    }
+
+    const user = await FormSubmission.findOne({ phone });
+    const token = generateToken(user._id, user.role);
+
+    res.json({ message: 'Registration completed', token });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Login Admin/User (Email/Password)
+exports.loginAdmin = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({
         success: false,
-        message: 'Server Error',
-        error: error.message
+        message: 'Please provide email and password'
       });
     }
-  };
-  
 
-// Logout user
+    const user = await User.findOne({ email }).select('+password');
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid email or password'
+      });
+    }
+
+    const isMatch = await user.matchPasswords(password);
+    if (!isMatch) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid email or password'
+      });
+    }
+
+    const token = generateToken(user._id, user.role);
+    await user.addToken(token);
+
+    res.status(200).json({
+      success: true,
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Server Error',
+      error: error.message
+    });
+  }
+};
+
+// Login Form-Based User (Phone/OTP)
+exports.loginFormWithPhone = async (req, res) => {
+  try {
+    const { phone } = req.body;
+    if (!phone) {
+      return res.status(400).json({ message: 'Phone is required' });
+    }
+
+    const user = await FormSubmission.findOne({ phone });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found. Please register first.' });
+    }
+
+    await sendPhoneOTP(phone);
+    res.json({ message: 'OTP sent to your phone' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Verify OTP for Form Login
+exports.verifyFormLoginOTP = async (req, res) => {
+  try {
+    const { phone, otp } = req.body;
+    if (!phone || !otp) {
+      return res.status(400).json({ message: 'Phone and OTP are required' });
+    }
+
+    const result = await verifyPhoneOTP(phone, otp);
+    if (!result.success) {
+      return res.status(400).json({ message: result.message });
+    }
+
+    const user = await FormSubmission.findOne({ phone });
+    const token = generateToken(user._id, user.role);
+
+    res.json({ message: 'Login successful', token });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Logout (Works for both User and FormSubmission)
 exports.logout = async (req, res) => {
   try {
-    // Get token from header
     const token = req.headers.authorization?.split(' ')[1];
-    
     if (!token) {
       return res.status(401).json({
         success: false,
@@ -130,9 +213,11 @@ exports.logout = async (req, res) => {
       });
     }
 
-    // Remove token from user's tokens array
-    await BlacklistedToken.create({ token: token});
-    await req.user.removeToken(token);
+    await BlacklistedToken.create({ token });
+
+    if (req.user) { // From User model
+      await req.user.removeToken(token);
+    }
 
     res.status(200).json({
       success: true,
@@ -147,14 +232,22 @@ exports.logout = async (req, res) => {
   }
 };
 
-// Get current logged in user
+// Get Current User (Admin/User only)
 exports.getMe = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
 
     res.status(200).json({
       success: true,
-      user
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      }
     });
   } catch (error) {
     res.status(500).json({
@@ -163,3 +256,4 @@ exports.getMe = async (req, res) => {
     });
   }
 };
+
