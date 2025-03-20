@@ -142,13 +142,21 @@ export default function TeamMemberForm() {
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700">Position</label>
-          <input
-            type="text"
+          <select
             name="position"
             value={formData.position}
             onChange={handleChange}
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-          />
+          >
+            <option value="">Select a position</option>
+            <option value="Founding_Team">Founding Team</option>
+            <option value="Core_Team">Core Team</option>
+            <option value="Interns">Interns</option>
+            <option value="Advisors">Advisors</option>
+            <option value="Investors">Investors</option>
+            <option value="Leadership Team">Leadership Team</option>
+            <option value="Board of Director">Board of Director</option>
+          </select>
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700">Image</label>

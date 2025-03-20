@@ -37,6 +37,8 @@ import JobOpeningList from './components/job-openings/JobOpeningList';
 import JobOpeningForm from './components/job-openings/JobOpeningForm';
 import StoreLocationList from './components/store-locations/StoreLocationList';
 import StoreLocationForm from './components/store-locations/StoreLocationForm';
+import TestimonialList from './components/testimonials/TestimonialList';
+import TestimonialForm from './components/testimonials/TestimonialForm';
 
 function App() {
   const { auth, loading } = useContext(AuthContext);
@@ -125,6 +127,9 @@ function App() {
               <Route path="store-locations" element={<StoreLocationList />} />
               <Route path="store-locations/new" element={<StoreLocationForm />} />
               <Route path="store-locations/edit/:id" element={<StoreLocationForm />} />
+              <Route path="testimonials" element={<TestimonialList />} />
+              <Route path="testimonials/new" element={<TestimonialForm />} />
+              <Route path="testimonials/edit/:id" element={<TestimonialForm />} />
             </>
           )}
           <Route

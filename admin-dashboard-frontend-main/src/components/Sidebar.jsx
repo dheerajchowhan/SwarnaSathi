@@ -1,22 +1,22 @@
 import React, { useContext, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
-  Users, 
-  LogOut, 
-  Layers, 
-  Image, 
-  Users2, 
-  DollarSign, 
-  Mail, 
-  ShoppingCartIcon, 
-  FileText, 
-  Settings, 
-  ChevronDown, 
-  HelpCircle, 
-  Briefcase, 
-  MapPin, 
-  UserPlus 
+import {
+  LayoutDashboard,
+  Users,
+  LogOut,
+  Layers,
+  Image,
+  Users2,
+  DollarSign,
+  Mail,
+  ShoppingCartIcon,
+  FileText,
+  Settings,
+  ChevronDown,
+  HelpCircle,
+  Briefcase,
+  MapPin,
+  UserPlus
 } from 'lucide-react';
 import { AuthContext } from '../context/AuthContext';
 
@@ -32,7 +32,7 @@ export default function Sidebar() {
       <div className="p-4">
         <h1 className="text-2xl font-bold">Admin Panel</h1>
       </div>
-      
+
       <div className="px-4 py-2">
         <button
           onClick={() => setIsMenuOpenD(!isMenuOpenD)}
@@ -41,7 +41,7 @@ export default function Sidebar() {
           <span className="text-lg font-semibold">DhruvaCapital</span>
           <ChevronDown size={20} className={`${isMenuOpenD ? 'rotate-180' : ''} transition-transform`} />
         </button>
-        
+
         {isMenuOpenD && (
           <div className="mt-2 bg-gray-700 rounded">
             <nav className="flex flex-col">
@@ -126,7 +126,7 @@ export default function Sidebar() {
           <span className="text-lg font-semibold">SwrnaSathi</span>
           <ChevronDown size={20} className={`${isMenuOpenS ? 'rotate-180' : ''} transition-transform`} />
         </button>
-        
+
         {isMenuOpenS && (
           <div className="mt-2 bg-gray-700 rounded">
             <nav className="flex flex-col">
@@ -174,6 +174,13 @@ export default function Sidebar() {
                   >
                     <FileText size={20} />
                     <span>Form Submissions</span>
+                  </Link>
+                  <Link
+                    to="/dashboard/testimonials"
+                    className={`flex items-center space-x-2 px-4 py-3 hover:bg-gray-600 ${location.pathname.startsWith('/dashboard/testimonials') ? 'bg-gray-600' : ''}`}
+                  >
+                    <Users2 size={20} /> {/* Or use a different icon */}
+                    <span>Testimonials</span>
                   </Link>
                   <Link
                     to="/dashboard/job-openings"

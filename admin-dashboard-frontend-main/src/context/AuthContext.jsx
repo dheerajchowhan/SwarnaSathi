@@ -62,7 +62,7 @@ export const AuthProvider = ({ children }) => {
   // Register function
   const register = async (userData) => {
     try {
-      const response = await axios.post(`${API_URL}/api/auth/register`, userData);
+      const response = await axios.post(`${API_URL}/api/auth/admin/register`, userData);
       
       if (response.data.success) {
         const { token, user } = response.data;
@@ -84,7 +84,7 @@ export const AuthProvider = ({ children }) => {
   // Login function
   const login = async (credentials) => {
     try {
-      const response = await axios.post(`${API_URL}/api/auth/login`, credentials);
+      const response = await axios.post(`${API_URL}/api/auth/admin/login`, credentials);
       
       if (response.data.success) {
         const { token, user } = response.data;
