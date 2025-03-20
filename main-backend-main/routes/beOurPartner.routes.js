@@ -4,6 +4,7 @@ const beOurPartnerControllers = require('../controllers/beOurPartnerControllers'
 
 // Routes
 router.post('/', beOurPartnerControllers.createFormSubmission);
+router.post('/send-otp', beOurPartnerControllers.sendOTP);
 router.post('/verify-otp', beOurPartnerControllers.verifyOTP);
 router.get('/', beOurPartnerControllers.getAllSubmissions);
 router.get('/:id', beOurPartnerControllers.getSubmission);

@@ -4,11 +4,15 @@ const formSubmissionSchema = new mongoose.Schema({
   type: {
     type: String,
     enum: ['swarna-sathi', 'business-associate', 'lending-partner'],
-    required: true
+    required: function() {
+      return this.isSubmitted === true;
+    }
   },
   name: {
     type: String,
-    required: true,
+    required: function() {
+      return this.isSubmitted === true;
+    },
     trim: true
   },
   phone: {
@@ -21,7 +25,7 @@ const formSubmissionSchema = new mongoose.Schema({
     type: String,
     match: /^\d{6}$/,
     required: function () {
-      return this.type !== 'lending-partner';
+      return this.isSubmitted === true && this.type !== 'lending-partner';
     }
   },
   email: {
@@ -29,7 +33,7 @@ const formSubmissionSchema = new mongoose.Schema({
     trim: true,
     match: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
     required: function () {
-      return this.type === 'lending-partner';
+      return this.isSubmitted === true && this.type === 'lending-partner';
     }
   },
   role: {
@@ -43,6 +47,14 @@ const formSubmissionSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  isSubmitted: {
+    type: Boolean,
+    default: false
+  },
+  submittedAt: {
+    type: Date,
+    default: null
+  },
   otp: {
     type: String,
     default: null
@@ -54,7 +66,17 @@ const formSubmissionSchema = new mongoose.Schema({
   createdAt: {
     type: Date,
     default: Date.now
+  },
+  updatedAt: {
+    type: Date,
+    default: Date.now
   }
+});
+
+// Update the updatedAt field on save
+formSubmissionSchema.pre('save', function (next) {
+  this.updatedAt = Date.now();
+  next();
 });
 
 module.exports = mongoose.model('FormSubmission', formSubmissionSchema);

@@ -22,7 +22,6 @@ const teamMemberSchema = new mongoose.Schema({
   },
   linkedinLink: {
     type: String,
-    required: true,
     trim: true,
     match: /^https?:\/\/(www\.)?linkedin\.com\/.*$/ // Basic LinkedIn URL validation
   },

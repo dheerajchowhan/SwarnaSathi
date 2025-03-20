@@ -55,12 +55,26 @@ exports.verifyPhoneOTP = async (phone, otp) => {
       return { success: false, message: 'OTP has expired' };
     }
 
-    formSubmission.otp = null;
-    formSubmission.otpExpiresAt = null;
-    formSubmission.isPhoneVerified = true;
-    await formSubmission.save();
-    return { success: true, message: 'Phone verified successfully' };
+    try {
+      // Use updateOne to bypass validation since we're only updating OTP-related fields
+      await FormSubmission.updateOne(
+        { _id: formSubmission._id },
+        { 
+          $set: { 
+            isPhoneVerified: true,
+            otp: null,
+            otpExpiresAt: null
+          } 
+        }
+      );
+      
+      return { success: true, message: 'Phone verified successfully' };
+    } catch (saveError) {
+      console.error('Error saving after OTP verification:', saveError);
+      return { success: false, message: 'Error updating verification status' };
+    }
   } catch (error) {
+    console.error('Error in verifyPhoneOTP:', error);
     throw new Error('Error verifying OTP: ' + error.message);
   }
 };

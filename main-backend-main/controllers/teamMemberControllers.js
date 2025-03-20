@@ -6,7 +6,7 @@ const path = require('path');
 exports.createTeamMember = async (req, res) => {
   try {
     const { position, name, description, linkedinLink } = req.body;
-    if (!position || !name || !description || !linkedinLink || !req.file) {
+    if (!position || !name || !description || !req.file) {
       return res.status(400).json({ message: 'All fields (position, image, name, description, linkedinLink) are required' });
     }
 
