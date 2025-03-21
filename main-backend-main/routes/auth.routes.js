@@ -14,7 +14,7 @@ const { protect } = require('../middlewares/auth');
 
 // Admin/User Routes (Email/Password)
 router.post('/admin/register', registerAdmin);
-router.post('/admin/login', loginAdmin);
+router.post('/login', loginAdmin);
 router.get('/me', protect, getMe);
 router.post('/logout', protect, logout);
 
