@@ -18,7 +18,7 @@ export default function FormSubmissionList() {
 
   const fetchSubmissions = async () => {
     try {
-      const response = await authAxios.get(`${url}/api/form-submissions`);
+      const response = await authAxios.get(`${url}/api/be-our-partner`);
       setSubmissions(response.data);
       setLoading(false);
     } catch (err) {
@@ -30,7 +30,7 @@ export default function FormSubmissionList() {
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this submission?')) {
       try {
-        await authAxios.delete(`${url}/api/form-submissions/${id}`);
+        await authAxios.delete(`${url}/api/be-our-partner/${id}`);
         setSubmissions(submissions.filter(sub => sub._id !== id));
       } catch (err) {
         setError(err.response?.data?.message || 'Error deleting submission');

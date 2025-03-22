@@ -28,7 +28,7 @@ export default function FormSubmissionForm() {
 
   const fetchSubmission = async () => {
     try {
-      const response = await authAxios.get(`${url}/api/form-submissions/${id}`);
+      const response = await authAxios.get(`${url}/api/be-our-partner/${id}`);
       setFormData(response.data);
     } catch (err) {
       setError(err.response?.data?.message || 'Error fetching submission');
@@ -68,9 +68,9 @@ export default function FormSubmissionForm() {
     setLoading(true);
     try {
       if (id) {
-        await authAxios.put(`${url}/api/form-submissions/${id}`, formData);
+        await authAxios.put(`${url}/api/be-our-partner/${id}`, formData);
       } else {
-        await authAxios.post(`${url}/api/form-submissions`, formData);
+        await authAxios.post(`${url}/api/be-our-partner`, formData);
       }
       navigate('/dashboard/form-submissions');
     } catch (err) {
