@@ -25,26 +25,36 @@ exports.createFormSubmission = async (req, res) => {
     if (type !== 'lending-partner' && !pincode) {
       return res.status(400).json({ message: 'Pincode is required for this type' });
     }
-
-    const formSubmission = new FormSubmission({
-      type,
-      name,
-      phone,
-      pincode: type !== 'lending-partner' ? pincode : undefined,
-      email: type === 'lending-partner' ? email : undefined,
-      loanType: loanType || 'gold-loan', // Store the loan type if provided
-      password: password // Store password if provided
-    });
-
-    const savedSubmission = await formSubmission.save();
-
-    // Send OTP after saving
-    await sendPhoneOTP(phone);
-
-    res.status(201).json({
-      submission: savedSubmission,
-      message: 'Form submitted, please verify phone with OTP'
-    });
+    
+    if (phone){
+      const check = await FormSubmission.findOne({phone})
+      if (check){
+        const formSubmission = await FormSubmission.findOneAndUpdate({phone}, {type}, {new: true})
+        return res.status(200).json({
+          submission: formSubmission,
+          message: 'Form submitted, please verify phone with OTP'
+        });
+      } else {
+        const formSubmission = new FormSubmission({
+          type,
+          name,
+          phone,
+          pincode: type !== 'lending-partner' ? pincode : undefined,
+          email: type === 'lending-partner' ? email : undefined,
+          loanType: loanType || 'gold-loan', // Store the loan type if provided
+          password: password // Store password if provided
+        });
+    
+        const savedSubmission = await formSubmission.save();
+    
+        // Send OTP after saving
+    
+        res.status(201).json({
+          submission: savedSubmission,
+          message: 'Form submitted, please verify phone with OTP'
+        });
+      }
+    }
   } catch (error) {
     if (error.code === 11000) { // Duplicate phone number
       res.status(400).json({ message: 'Phone number already exists' });
@@ -163,6 +173,25 @@ exports.verifyOTP = async (req, res) => {
     } else {
       res.status(400).json({ success: false, message: result.message });
     }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+exports.verifyPhoneOTP = async (req, res) => {
+  try {
+    const { phone, otp } = req.body;
+    if (!phone || !otp) {
+      return res.status(400).json({ message: 'Phone and OTP are required' });
+    }
+    console.log("Verifying OTP:", { phone, otp });
+    const result = await verifyPhoneOTP(phone, otp);
+    // const result = true;
+    if (result.success) {
+      return res.status(200).json({ success: true, message: result.message });
+    } else {
+      return res.status(400).json({ success: false, message: result.message });
+    }
+
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -358,8 +387,9 @@ exports.updateSubmission = async (req, res) => {
       return res.status(404).json({ message: 'Submission not found' });
     }
 
-    const { name, phone, pincode, email } = req.body;
+    const { type, name, phone, pincode, email } = req.body;
     const updateData = {
+      type: type || submission.type,
       name: name || submission.name,
       phone: phone || submission.phone,
       pincode: submission.type !== 'lending-partner' ? (pincode || submission.pincode) : undefined,

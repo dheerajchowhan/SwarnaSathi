@@ -7,6 +7,7 @@ const { protect } = require('../middlewares/auth');
 router.post('/', beOurPartnerControllers.createFormSubmission);
 router.post('/send-otp', beOurPartnerControllers.sendOTP);
 router.post('/verify-otp', beOurPartnerControllers.verifyOTP);
+router.post('/verify-phone-otp', beOurPartnerControllers.verifyPhoneOTP);
 router.post('/login', beOurPartnerControllers.login);
 router.post('/set-password', beOurPartnerControllers.setPassword);
 router.post('/logout', beOurPartnerControllers.logout);
