@@ -4,11 +4,13 @@ const bcrypt = require('bcryptjs');
 const formSubmissionSchema = new mongoose.Schema({
   type: {
     type: String,
-    required: true
+    required: true,
+    default: 'swarna-sathi'
   },
   name: {
     type: String,
     required: true,
+    default: "Swarn Sathi",
     trim: true
   },
   phone: {
@@ -19,6 +21,7 @@ const formSubmissionSchema = new mongoose.Schema({
   },
   pincode: {
     type: String,
+    default: "000000",
     match: /^\d{6}$/,
     required: function () {
       return this.type !== 'lending-partner';
